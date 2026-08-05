@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="Bookmark Studio user guide — install on Windows, macOS and Linux, set up the browser extension, analyze site designs, and export design skills.">
+<title>Bookmark Studio — User Guide</title>
+<style>
+  :root {
+    --signal: #FACE44;
+    --signal-deep: #C9950A;
+    --signal-tint: #FDF6E0;
+    --canvas: #EFEFEC;
+    --surface: #FFFFFF;
+    --surface-muted: #F6F6F3;
+    --surface-sunken: #E6E5E0;
+    --line: #E2E1DC;
+    --line-strong: #CFCDC5;
+    --ink: #17150F;
+    --ink-muted: #6E6B62;
+    --ink-faint: #9C9890;
+    --alert: #B4341C;
+    --alert-tint: #FBEDEA;
+    --ok: #1F7A4C;
+    --ok-tint: #E9F5EE;
+    --radius-s: 6px;
+    --radius-m: 10px;
+    --radius-l: 16px;
+    --shadow-card: 0 1px 2px rgba(23,21,15,.05), 0 8px 24px -12px rgba(23,21,15,.12);
+
+    /* Always-dark surfaces. These must NOT follow --ink, which inverts in dark
+       mode — the hero and code blocks are dark in both schemes by design. */
+    --hero-bg: #17150F;
+    --hero-ink: #FFFFFF;
+    --hero-sub: #C9C6BE;
+    --hero-meta: #8B877E;
+    --code-bg: #17150F;
+    --code-ink: #EDEAE2;
+    --code-line: #17150F;
+    --code-comment: #A39E94;
+
+    --font: 'Inter var', 'Inter', system-ui, -apple-system, 'Segoe UI Variable', 'Segoe UI', Roboto, sans-serif;
+    --mono: ui-monospace, 'SF Mono', 'Cascadia Code', 'JetBrains Mono', Menlo, Consolas, monospace;
+    --measure: 74ch;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --signal: #FACE44;
+      --signal-deep: #FADE7A;
+      --signal-tint: #2A2413;
+      --canvas: #121110;
+      --surface: #1B1A18;
+      --surface-muted: #221F1C;
+      --surface-sunken: #2A2724;
+      --line: #302D29;
+      --line-strong: #45413B;
+      --ink: #F2F0EB;
+      --ink-muted: #A8A49B;
+      --ink-faint: #78746C;
+      --alert: #F08A72;
+      --alert-tint: #2E1A15;
+      --ok: #6FCF9A;
+      --ok-tint: #14251C;
+      --shadow-card: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+
+      /* Pushed darker than the page so they still read as distinct panels
+         against an already-dark canvas, and given a visible edge. */
+      --hero-bg: #0B0A09;
+      --code-bg: #0B0A09;
+      --code-line: #34302B;
+    }
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; scroll-padding-top: 88px; -webkit-text-size-adjust: 100%; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { animation: none !important; transition: none !important; } }
+
+  body {
+    margin: 0;
+    background: var(--canvas);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 16px;
+    line-height: 1.65;
+    font-feature-settings: 'kern', 'liga', 'cv11';
+    text-rendering: optimizeLegibility;
+  }
+
+  /* ── Masthead ─────────────────────────────────────────────── */
+  .masthead {
+    background: var(--hero-bg);
+    color: var(--hero-ink);
+    padding: clamp(40px, 7vw, 72px) 24px clamp(36px, 6vw, 60px);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .masthead::after {
+    content: '';
+    position: absolute; inset: auto 0 0 0; height: 3px;
+    background: linear-gradient(90deg, var(--signal), transparent 70%);
+  }
+  .mark {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 56px; height: 56px; margin-bottom: 20px;
+    background: var(--signal); color: #17150F;
+    border-radius: 14px; font-weight: 800; font-size: 22px; letter-spacing: -.02em;
+  }
+  .masthead h1 {
+    margin: 0 0 10px; font-size: clamp(28px, 5vw, 42px);
+    font-weight: 800; letter-spacing: -.03em; line-height: 1.1;
+    color: var(--hero-ink);
+  }
+  .masthead .tagline { margin: 0 auto; max-width: 46ch; font-size: clamp(15px, 2vw, 18px); color: var(--hero-sub); }
+  .masthead .meta {
+    margin: 22px 0 0; font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--hero-meta); font-weight: 600;
+  }
+
+  /* ── Shell ────────────────────────────────────────────────── */
+  .shell {
+    max-width: 1180px; margin: 0 auto; padding: 0 24px 96px;
+    display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 48px;
+    align-items: start;
+  }
+  @media (max-width: 940px) { .shell { grid-template-columns: 1fr; gap: 0; } }
+
+  /* ── Table of contents ────────────────────────────────────── */
+  .toc {
+    position: sticky; top: 24px; margin-top: 48px;
+    font-size: 13.5px; line-height: 1.45;
+  }
+  .toc .toc-title {
+    font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ink-faint); margin: 0 0 12px; padding-left: 12px;
+  }
+  .toc ol { list-style: none; margin: 0; padding: 0; counter-reset: toc; }
+  .toc li { counter-increment: toc; }
+  .toc a {
+    display: block; padding: 6px 12px; border-left: 2px solid var(--line);
+    color: var(--ink-muted); text-decoration: none; transition: color .15s, border-color .15s;
+  }
+  .toc a::before { content: counter(toc) '. '; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+  .toc a:hover { color: var(--ink); border-left-color: var(--line-strong); }
+  .toc a:focus-visible { outline: 2px solid var(--signal-deep); outline-offset: 2px; border-radius: 3px; }
+  @media (max-width: 940px) {
+    .toc { position: static; margin: 32px 0 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-m); padding: 18px; }
+  }
+
+  /* ── Article ──────────────────────────────────────────────── */
+  main { margin-top: 48px; min-width: 0; }
+
+  section.chapter { margin-bottom: 64px; scroll-margin-top: 24px; }
+
+  .eyebrow {
+    display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--signal-deep); margin: 0 0 8px;
+  }
+
+  h2 {
+    font-size: clamp(23px, 3.2vw, 29px); font-weight: 800; letter-spacing: -.025em;
+    margin: 0 0 8px; line-height: 1.2; color: var(--ink);
+  }
+  h3 {
+    font-size: 18px; font-weight: 700; letter-spacing: -.015em;
+    margin: 36px 0 10px; color: var(--ink);
+  }
+  h4 { font-size: 15px; font-weight: 700; margin: 24px 0 8px; color: var(--ink); }
+
+  p { margin: 0 0 14px; max-width: var(--measure); color: var(--ink); }
+  .lede { font-size: 17px; color: var(--ink-muted); max-width: var(--measure); margin-bottom: 24px; }
+
+  a { color: var(--ink); text-decoration-color: var(--signal-deep); text-underline-offset: 3px; }
+  a:hover { text-decoration-thickness: 2px; }
+
+  ul, ol { max-width: var(--measure); padding-left: 22px; margin: 0 0 16px; }
+  li { margin-bottom: 7px; }
+  li::marker { color: var(--ink-faint); }
+
+  strong { font-weight: 650; }
+
+  code {
+    font-family: var(--mono); font-size: .875em;
+    background: var(--surface-sunken); padding: .15em .42em;
+    border-radius: 4px; border: 1px solid var(--line);
+    word-break: break-word;
+  }
+  pre {
+    font-family: var(--mono); font-size: 13px; line-height: 1.6;
+    background: var(--code-bg); color: var(--code-ink);
+    border: 1px solid var(--code-line);
+    padding: 16px 18px; border-radius: var(--radius-m);
+    overflow-x: auto; margin: 0 0 18px; max-width: var(--measure);
+    /* Long commands wrap instead of hiding behind a scrollbar. */
+    white-space: pre-wrap; word-break: break-word;
+  }
+  pre code {
+    background: none; border: 0; padding: 0;
+    color: var(--code-ink); font-size: 13px; white-space: inherit;
+  }
+  pre .c { color: var(--code-comment); }
+
+  kbd {
+    font-family: var(--font); font-size: 12px; font-weight: 600;
+    background: var(--surface); border: 1px solid var(--line-strong);
+    border-bottom-width: 2px; border-radius: 5px; padding: 2px 6px;
+    color: var(--ink); white-space: nowrap;
+  }
+
+  .ui {
+    font-weight: 650;
+    background: var(--signal-tint);
+    border: 1px solid color-mix(in srgb, var(--signal) 40%, transparent);
+    border-radius: 4px; padding: .1em .4em; white-space: nowrap;
+  }
+
+  /* ── Cards & steps ────────────────────────────────────────── */
+  .card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius-l); padding: 24px 26px; margin: 0 0 20px;
+    box-shadow: var(--shadow-card);
+  }
+  .card > :last-child { margin-bottom: 0; }
+  .card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .card-head h3 { margin: 0; font-size: 19px; }
+
+  .os-badge {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    background: var(--surface-sunken); color: var(--ink-muted);
+    border-radius: 999px; padding: 4px 11px;
+  }
+  .os-badge svg { width: 13px; height: 13px; }
+
+  ol.steps { list-style: none; padding: 0; counter-reset: step; max-width: var(--measure); }
+  ol.steps > li {
+    counter-increment: step; position: relative;
+    padding-left: 42px; margin-bottom: 18px;
+  }
+  ol.steps > li::before {
+    content: counter(step);
+    position: absolute; left: 0; top: 0;
+    width: 27px; height: 27px; border-radius: 50%;
+    background: var(--signal); color: #17150F;
+    font-size: 13px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+  }
+  ol.steps > li > :last-child { margin-bottom: 0; }
+  ol.steps ul { margin-top: 8px; }
+
+  /* ── Callouts ─────────────────────────────────────────────── */
+  .callout {
+    display: grid; grid-template-columns: 22px 1fr; gap: 12px;
+    border-radius: var(--radius-m); padding: 14px 18px; margin: 0 0 18px;
+    max-width: var(--measure); font-size: 15px;
+    border: 1px solid var(--line); background: var(--surface-muted);
+  }
+  .callout p { margin: 0 0 8px; }
+  .callout > div > :last-child { margin-bottom: 0; }
+  .callout .ico { font-size: 15px; line-height: 1.5; font-weight: 800; }
+  .callout .label { font-weight: 700; }
+  .callout.note { background: var(--signal-tint); border-color: color-mix(in srgb, var(--signal) 45%, transparent); }
+  .callout.note .ico, .callout.note .label { color: var(--signal-deep); }
+  .callout.warn { background: var(--alert-tint); border-color: color-mix(in srgb, var(--alert) 32%, transparent); }
+  .callout.warn .ico, .callout.warn .label { color: var(--alert); }
+  .callout.tip { background: var(--ok-tint); border-color: color-mix(in srgb, var(--ok) 32%, transparent); }
+  .callout.tip .ico, .callout.tip .label { color: var(--ok); }
+
+  /* ── Screenshot placeholders ──────────────────────────────── */
+  figure.shot {
+    margin: 20px 0 24px; max-width: var(--measure);
+    border: 2px dashed var(--line-strong); border-radius: var(--radius-m);
+    background: repeating-linear-gradient(45deg, var(--surface-muted), var(--surface-muted) 12px, var(--surface) 12px, var(--surface) 24px);
+    padding: 32px 24px; text-align: center;
+  }
+  figure.shot .slot {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--ink-faint); margin-bottom: 10px;
+  }
+  figure.shot .what { font-size: 15px; font-weight: 650; color: var(--ink); margin: 0 auto 6px; max-width: 52ch; }
+  figure.shot figcaption { font-size: 13px; color: var(--ink-muted); margin: 0 auto; max-width: 56ch; }
+  figure.shot .file { font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint); margin-top: 10px; display: block; }
+
+  /* ── Tables ───────────────────────────────────────────────── */
+  .table-wrap { overflow-x: auto; margin: 0 0 20px; max-width: var(--measure); }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th {
+    font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--ink-faint); border-bottom: 1px solid var(--line-strong); white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  td code { white-space: nowrap; }
+
+  /* ── Download / asset tables ──────────────────────────────── */
+  .dl-group { margin: 0 0 22px; }
+  .dl-group > h4 {
+    display: flex; align-items: center; gap: 9px;
+    margin: 0 0 10px; font-size: 15px; font-weight: 700;
+  }
+  .dl-group > h4 .os-ico {
+    width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center;
+    background: var(--surface-sunken); border-radius: 5px; flex-shrink: 0;
+  }
+  .dl-group > h4 .os-ico svg { width: 13px; height: 13px; fill: var(--ink-muted); }
+
+  table.dl { font-size: 14px; }
+  table.dl th { background: var(--surface-muted); }
+  table.dl td:first-child { white-space: nowrap; }
+  table.dl code.fname {
+    background: var(--surface-sunken); border: 1px solid var(--line);
+    font-size: 12.5px; font-weight: 600; padding: 3px 7px; border-radius: 5px;
+    white-space: nowrap;
+  }
+  table.dl td .size {
+    display: inline-block; font-size: 12px; color: var(--ink-faint);
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+
+  /* GitHub-style asset list */
+  .assets { border: 1px solid var(--line); border-radius: var(--radius-m); overflow: hidden; margin: 0 0 20px; max-width: var(--measure); background: var(--surface); }
+  .assets .assets-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 16px; border-bottom: 1px solid var(--line);
+    background: var(--surface-muted);
+    font-size: 12px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-muted);
+  }
+  .assets .count {
+    background: var(--surface-sunken); border-radius: 999px; padding: 1px 8px;
+    font-size: 11px; letter-spacing: 0; color: var(--ink-muted);
+  }
+  .assets .asset {
+    display: flex; align-items: center; gap: 12px;
+    padding: 9px 16px; border-bottom: 1px solid var(--line); font-size: 13.5px;
+  }
+  .assets .asset:last-child { border-bottom: 0; }
+  .assets .asset .nm { font-family: var(--mono); font-size: 12.5px; font-weight: 600; flex: 1; min-width: 0; word-break: break-all; }
+  .assets .asset .sz { color: var(--ink-faint); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .assets .asset .box { width: 14px; height: 14px; flex-shrink: 0; fill: none; stroke: var(--ink-faint); stroke-width: 1.6; }
+
+  /* ── Misc ─────────────────────────────────────────────────── */
+  hr { border: 0; border-top: 1px solid var(--line); margin: 40px 0; }
+
+  .pill-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; }
+  .pill {
+    font-size: 13px; font-weight: 600; background: var(--surface); border: 1px solid var(--line);
+    border-radius: 999px; padding: 5px 13px; color: var(--ink-muted);
+  }
+
+  footer.doc-footer {
+    border-top: 1px solid var(--line); margin-top: 40px; padding: 28px 0 0;
+    font-size: 13px; color: var(--ink-faint);
+  }
+
+  /* ── Print / PDF ──────────────────────────────────────────── */
+  @page { size: A4; margin: 16mm 15mm 18mm; }
+  @media print {
+    :root {
+      --canvas: #FFF; --surface: #FFF; --surface-muted: #FAFAF8; --surface-sunken: #F1F0EC;
+      --ink: #17150F; --ink-muted: #55524B; --ink-faint: #86827A;
+      --shadow-card: none;
+      /* Ink on paper: the hero and code blocks invert so they don't burn toner
+         and stay legible in black-and-white. */
+      --hero-bg: #FFF; --hero-ink: #17150F; --hero-sub: #55524B; --hero-meta: #86827A;
+      --code-bg: #F1F0EC; --code-ink: #17150F; --code-line: #DEDCD6; --code-comment: #5F5C55;
+    }
+    body { background: #FFF; font-size: 10.5pt; line-height: 1.5; }
+    .masthead { padding: 0 0 18pt; background: var(--hero-bg); color: var(--hero-ink); text-align: left; border-bottom: 2pt solid var(--signal); }
+    .masthead::after { display: none; }
+    .mark { width: 34pt; height: 34pt; font-size: 15pt; margin-bottom: 10pt; border-radius: 8pt; }
+    .masthead h1 { font-size: 26pt; }
+    .masthead .tagline { color: var(--ink-muted); margin: 0; font-size: 11pt; }
+    .masthead .meta { color: var(--ink-faint); margin-top: 12pt; }
+    .shell { display: block; max-width: none; padding: 0; }
+    .toc { position: static; margin: 22pt 0 0; padding: 0; border: 0; background: none; break-after: page; }
+    .toc .toc-title { font-size: 9pt; padding-left: 0; }
+    .toc a { border-left: 0; padding: 3pt 0; color: var(--ink); }
+    main { margin-top: 20pt; }
+    section.chapter { break-before: page; margin-bottom: 24pt; }
+    section.chapter:first-of-type { break-before: avoid; }
+    h2, h3, h4 { break-after: avoid; }
+    p, li, tr, figure.shot, .callout { break-inside: avoid; }
+    .card { break-inside: avoid; box-shadow: none; border-radius: 6pt; padding: 12pt 14pt; }
+    pre { background: var(--code-bg); color: var(--code-ink); border: 1pt solid var(--line); }
+    pre code { color: var(--code-ink); }
+    a { text-decoration: none; color: var(--ink); }
+    figure.shot { background: #FAFAF8; padding: 18pt 12pt; }
+    :root, p, li { max-width: none; }
+    .table-wrap, table, p, ul, ol, .callout, figure.shot, .lede { max-width: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="mark">BS</div>
+  <h1>Bookmark Studio</h1>
+  <p class="tagline">Turn any bookmarked website into a reusable design profile — colors, typography, layout, components and motion, captured and exported in a few clicks.</p>
+  <p class="meta">User Guide · Version 2.1 · August 2026</p>
+</header>
+
+<div class="shell">
+
+  <nav class="toc" aria-label="Table of contents">
+    <p class="toc-title">Contents</p>
+    <ol>
+      <li><a href="#overview">What Bookmark Studio does</a></li>
+      <li><a href="#requirements">Before you start</a></li>
+      <li><a href="#install-desktop">Install the desktop app</a></li>
+      <li><a href="#install-extension">Install the browser extension</a></li>
+      <li><a href="#first-run">First run &amp; sign-in</a></li>
+      <li><a href="#analyze-one">Analyze one site</a></li>
+      <li><a href="#analyze-many">Analyze several sites</a></li>
+      <li><a href="#sections">Pick sections &amp; attributes</a></li>
+      <li><a href="#download-skill">Download the skill</a></li>
+      <li><a href="#data">Where your data lives</a></li>
+      <li><a href="#troubleshooting">Troubleshooting</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <!-- ══ 1 ══════════════════════════════════════════════════ -->
+    <section class="chapter" id="overview">
+      <p class="eyebrow">Chapter 1</p>
+      <h2>What Bookmark Studio does</h2>
+      <p class="lede">Bookmark Studio is a desktop app that reads your browser bookmarks and turns any of those sites into a structured design analysis you can compare, edit and export.</p>
+
+      <p>It works in three moves:</p>
+
+      <ol>
+        <li><strong>Collect.</strong> Your bookmarks arrive either by a one-time import from your browser's bookmarks file, or live over the companion browser extension, which keeps the library in sync as you bookmark things.</li>
+        <li><strong>Analyze.</strong> Point it at a site and it reads the live page, then reports the colors, typography, layout grid, components, motion, design tokens and accessibility characteristics it found — plus the tech stack behind it.</li>
+        <li><strong>Export.</strong> Tick the parts you want to keep — colors from one site, typography from another — retune them, then save the result as a PDF, a JSON design profile, or a ready-to-use skill you can hand to an AI assistant.</li>
+      </ol>
+
+      <div class="pill-row">
+        <span class="pill">Windows</span>
+        <span class="pill">macOS</span>
+        <span class="pill">Linux</span>
+        <span class="pill">Chrome · Edge · Brave · Arc · Vivaldi</span>
+        <span class="pill">Safari</span>
+      </div>
+
+      <div class="callout tip">
+        <span class="ico" aria-hidden="true">✓</span>
+        <div><p><span class="label">Everything stays on your machine.</span> Bookmarks, analyses and thumbnails are stored in a local database. Nothing is uploaded to a Bookmark Studio server — the only outbound traffic is the app fetching the public pages you ask it to analyze, and Google sign-in.</p></div>
+      </div>
+
+      <figure class="shot">
+        <span class="slot">◻︎ Screenshot slot 1.1</span>
+        <p class="what">The main window after a library has been imported</p>
+        <figcaption>Full app window: folder tree on the left, thumbnail grid in the middle, toolbar across the top. Use a library with 15–30 varied bookmarks so the grid looks realistic.</figcaption>
+        <span class="file">suggested filename: 01-main-window.png</span>
+      </figure>
+    </section>
+
+    <!-- ══ 2 ══════════════════════════════════════════════════ -->
+    <section class="chapter" id="requirements">
+      <p class="eyebrow">Chapter 2</p>
+      <h2>Before you start</h2>
+      <p class="lede">Two things make up a complete installation: the desktop app, and the browser extension that signs you in and keeps bookmarks flowing.</p>
+
+      <h3>You need both</h3>
+      <p>The desktop app has <strong>no login screen of its own</strong>. It takes its identity from the first browser extension that signs in. So the extension is not optional — without it, the app has nothing to show.</p>
+
+      <h3>System requirements</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Item</th><th>Requirement</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Windows</td><td>Windows 10 or 11, 64-bit</td></tr>
+            <tr><td>macOS</td><td>macOS 11 Big Sur or later — Intel and Apple Silicon both supported</td></tr>
+            <tr><td>Linux</td><td>Ubuntu 20.04+, Debian 11+, Fedora 36+ or equivalent, 64-bit</td></tr>
+            <tr><td>Disk space</td><td>~400 MB for the app, plus roughly 1 MB per 100 cached site thumbnails</td></tr>
+            <tr><td>Browser</td><td>Chrome, Edge, Brave, Arc, Vivaldi or Chromium (any recent version). Safari 17+ also works but needs Xcode to set up — see <a href="#install-extension">Chapter 4</a>.</td></tr>
+            <tr><td>Internet</td><td>Required for analyzing sites and for Google sign-in. Browsing your existing library works offline.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Where to get the files</h3>
+      <p>Every installer and both extensions are published together on the project's <strong>Releases</strong> page. Open the newest release and expand <strong>Assets</strong> — you need <em>two</em> downloads: one desktop installer for your operating system, and one extension for your browser.</p>
+
+      <!-- Windows -->
+      <div class="dl-group">
+        <h4>
+          <span class="os-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 5.6l7.4-1v7.1H3V5.6zm0 12.8l7.4 1v-7h-7.4v6zM11.4 19.6L21 21V12.7h-9.6v6.9zM11.4 3v7.7H21V2l-9.6 1z"/></svg></span>
+          Windows
+        </h4>
+        <div class="table-wrap">
+          <table class="dl">
+            <thead><tr><th>File</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code class="fname">Bookmark Studio-Setup-2.1.1.exe</code><br><span class="size">83.8 MB</span></td>
+                <td>NSIS installer — run it and follow the wizard</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- macOS -->
+      <div class="dl-group">
+        <h4>
+          <span class="os-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16.1 12.6c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9s-1.8-.9-3-.8c-1.5 0-2.9.9-3.7 2.3-1.6 2.7-.4 6.8 1.1 9 .7 1.1 1.6 2.3 2.8 2.2 1.1 0 1.5-.7 2.9-.7s1.7.7 2.9.7c1.2 0 2-1.1 2.7-2.2.9-1.2 1.2-2.4 1.2-2.5-.1 0-2.3-.9-2.3-3.5zM13.9 5.3c.6-.8 1-1.8.9-2.9-.9 0-2 .6-2.6 1.4-.6.7-1.1 1.7-.9 2.8 1 0 2-.5 2.6-1.3z"/></svg></span>
+          macOS
+        </h4>
+        <div class="table-wrap">
+          <table class="dl">
+            <thead><tr><th>File</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code class="fname">Bookmark Studio-2.1.1-mac-arm64.dmg</code><br><span class="size">105 MB</span></td>
+                <td>Apple Silicon (M1 / M2 / M3 / M4)</td>
+              </tr>
+              <tr>
+                <td><code class="fname">Bookmark Studio-2.1.1-mac-x64.dmg</code><br><span class="size">110 MB</span></td>
+                <td>Intel</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div><p><span class="label">First launch:</span> the build is unsigned. Right-click the app → <span class="ui">Open</span> → <span class="ui">Open anyway</span> to get past Gatekeeper. Full steps in <a href="#install-desktop">Chapter 3</a>.</p></div>
+        </div>
+      </div>
+
+      <!-- Linux -->
+      <div class="dl-group">
+        <h4>
+          <span class="os-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2c-2.2 0-3.5 1.7-3.5 4.2 0 1.3.2 2 .1 2.9-.2 1.2-1.4 2.6-2 4-.6 1.3-.9 2.6-1.4 3.4-.5.8-1.3 1-1.2 1.8.1.7 1 .8 2 1.2s1.6 1 2.5 1.2c.9.2 1.6-.4 1.9-1h3.2c.3.6 1 1.2 1.9 1 .9-.2 1.5-.8 2.5-1.2s1.9-.5 2-1.2c.1-.8-.7-1-1.2-1.8-.5-.8-.8-2.1-1.4-3.4-.6-1.4-1.8-2.8-2-4-.1-.9.1-1.6.1-2.9C15.5 3.7 14.2 2 12 2zm-1.6 3.1c.4 0 .8.5.8 1.1s-.4 1.1-.8 1.1-.8-.5-.8-1.1.4-1.1.8-1.1zm3.2 0c.4 0 .8.5.8 1.1s-.4 1.1-.8 1.1-.8-.5-.8-1.1.4-1.1.8-1.1z"/></svg></span>
+          Linux
+        </h4>
+        <div class="table-wrap">
+          <table class="dl">
+            <thead><tr><th>File</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code class="fname">Bookmark Studio-2.1.1.deb</code><br><span class="size">77.6 MB</span></td>
+                <td>Ubuntu / Debian — install with <code>sudo dpkg -i</code></td>
+              </tr>
+              <tr>
+                <td><code class="fname">Bookmark Studio-2.1.1.AppImage</code><br><span class="size">116 MB</span></td>
+                <td>All distributions — <code>chmod +x</code>, then run it directly</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Extension -->
+      <div class="dl-group">
+        <h4>
+          <span class="os-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 2a2.5 2.5 0 012.5 2.5V5H15a1 1 0 011 1v2.5h.5a2.5 2.5 0 110 5H16V16a1 1 0 01-1 1h-2.5v-.5a2.5 2.5 0 10-5 0V17H5a1 1 0 01-1-1v-2.5h.5a2.5 2.5 0 100-5H4V6a1 1 0 011-1h2.5v-.5A2.5 2.5 0 0110 2z"/></svg></span>
+          Browser extension
+        </h4>
+        <div class="table-wrap">
+          <table class="dl">
+            <thead><tr><th>File</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><code class="fname">bookmark-studio-chrome-extension-v2.1.1.zip</code><br><span class="size">19.1 KB</span></td>
+                <td>Chrome, Edge, Brave, Arc, Vivaldi — unzip, then <code>chrome://extensions</code> → enable Developer mode → <span class="ui">Load unpacked</span> → select the folder</td>
+              </tr>
+              <tr>
+                <td><code class="fname">bookmark-studio-safari-extension-v2.1.1.zip</code><br><span class="size">19.5 KB</span></td>
+                <td>Safari 17+ — needs converting to an Xcode project first; see the included <code>README-XCODE.md</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>After loading it, click the extension's toolbar icon and sign in with Google (or an email and password) to start syncing bookmarks into the desktop app.</p>
+      </div>
+
+      <h3>The full asset list</h3>
+      <p>A release also carries <code>.zip</code> copies of the macOS builds (for tools that prefer them over a disk image) and the source code. A typical release looks like this:</p>
+
+      <div class="assets">
+        <div class="assets-head">Assets <span class="count">11</span></div>
+        <div class="asset"><svg class="box" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3zM4 7.5l8 4.5 8-4.5M12 12v9"/></svg><span class="nm">bookmark-studio-chrome-extension-v2.1.1.zip</span><span class="sz">19.1 KB</span></div>
+        <div class="asset"><svg class="box" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3zM4 7.5l8 4.5 8-4.5M12 12v9"/></svg><span class="nm">bookmark-studio-safari-extension-v2.1.1.zip</span><span class="sz">19.5 KB</span></div>
+        <div class="asset"><svg class="box" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3zM4 7.5l8 4.5 8-4.5M12 12v9"/></svg><span class="nm">Bookmark Studio-2.1.1-mac-arm64.dmg</span><span class="sz">105 MB</span></div>
+        <div class="asset"><svg class="box" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3zM4 7.5l8 4.5 8-4.5M12 12v9"/></svg><span class="nm">Bookmark Studio-2.1.1-mac-arm64.zip</span><span class="sz">101 MB</span></div>
+        <div class="asset"><svg class="box" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3zM4 7.5l8 4.5 8-4.5M12 12v9"/></svg><span class="nm">Bookmark Studio-2.1.1-mac-x64.dmg</span><span class="sz">110 MB</span></div>
+        <div class="asset"><svg class="box" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3zM4 7.5l8 4.5 8-4.5M12 12v9"/></svg><span class="nm">Bookmark Studio-2.1.1-mac-x64.zip</span><span class="sz">107 MB</span></div>
+        <div class="asset"><svg class="box" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3zM4 7.5l8 4.5 8-4.5M12 12v9"/></svg><span class="nm">Bookmark Studio-2.1.1.AppImage</span><span class="sz">116 MB</span></div>
+        <div class="asset"><svg class="box" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3zM4 7.5l8 4.5 8-4.5M12 12v9"/></svg><span class="nm">Bookmark Studio-2.1.1.deb</span><span class="sz">77.6 MB</span></div>
+        <div class="asset"><svg class="box" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3zM4 7.5l8 4.5 8-4.5M12 12v9"/></svg><span class="nm">Bookmark Studio-Setup-2.1.1.exe</span><span class="sz">83.8 MB</span></div>
+        <div class="asset"><svg class="box" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3zM4 7.5l8 4.5 8-4.5M12 12v9"/></svg><span class="nm">Source code (zip)</span><span class="sz">—</span></div>
+        <div class="asset"><svg class="box" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3zM4 7.5l8 4.5 8-4.5M12 12v9"/></svg><span class="nm">Source code (tar.gz)</span><span class="sz">—</span></div>
+      </div>
+
+      <div class="callout note">
+        <span class="ico" aria-hidden="true">i</span>
+        <div>
+          <p><span class="label">Version numbers change.</span> Always take the newest release at the top of the page — every filename above is from version 2.1.1, and file sizes vary a little between releases.</p>
+          <p>Each asset also publishes a <code>sha256</code> checksum next to it, if you want to verify a download before running it.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ 3 ══════════════════════════════════════════════════ -->
+    <section class="chapter" id="install-desktop">
+      <p class="eyebrow">Chapter 3</p>
+      <h2>Install the desktop app</h2>
+      <p class="lede">Pick the card for your operating system. Each one takes about two minutes.</p>
+
+      <!-- Windows -->
+      <div class="card">
+        <div class="card-head">
+          <span class="os-badge"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5.6l7.4-1v7.1H3V5.6zm0 12.8l7.4 1v-7h-7.4v6zM11.4 19.6L21 21V12.7h-9.6v6.9zM11.4 3v7.7H21V2l-9.6 1z"/></svg>Windows</span>
+          <h3>Windows 10 / 11</h3>
+        </div>
+
+        <ol class="steps">
+          <li>Download <code>Bookmark Studio-Setup-&lt;version&gt;.exe</code> from the Releases page.</li>
+          <li>Double-click the downloaded file.</li>
+          <li>
+            <p>Windows may show a blue <strong>"Windows protected your PC"</strong> screen. This appears because the installer isn't code-signed yet, not because anything is wrong with it.</p>
+            <p>Click <span class="ui">More info</span>, then <span class="ui">Run anyway</span>.</p>
+          </li>
+          <li>Choose an install folder if you want a non-default location, then click <span class="ui">Install</span>.</li>
+          <li>The installer creates a desktop shortcut and a Start menu entry named <strong>Bookmark Studio</strong>. Launch it from either.</li>
+        </ol>
+
+        <div class="callout note">
+          <span class="ico" aria-hidden="true">i</span>
+          <div><p>The first launch may take 10–20 seconds while the local database is created. Later launches are instant.</p></div>
+        </div>
+      </div>
+
+      <!-- macOS -->
+      <div class="card">
+        <div class="card-head">
+          <span class="os-badge"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.1 12.6c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9s-1.8-.9-3-.8c-1.5 0-2.9.9-3.7 2.3-1.6 2.7-.4 6.8 1.1 9 .7 1.1 1.6 2.3 2.8 2.2 1.1 0 1.5-.7 2.9-.7s1.7.7 2.9.7c1.2 0 2-1.1 2.7-2.2.9-1.2 1.2-2.4 1.2-2.5-.1 0-2.3-.9-2.3-3.5zM13.9 5.3c.6-.8 1-1.8.9-2.9-.9 0-2 .6-2.6 1.4-.6.7-1.1 1.7-.9 2.8 1 0 2-.5 2.6-1.3z"/></svg>macOS</span>
+          <h3>macOS 11 and later</h3>
+        </div>
+
+        <ol class="steps">
+          <li>
+            <p>Download the <code>.dmg</code> that matches your Mac:</p>
+            <ul>
+              <li><strong>Apple Silicon</strong> (M1, M2, M3, M4) → the <code>arm64</code> file</li>
+              <li><strong>Intel</strong> → the <code>x64</code> file</li>
+            </ul>
+            <p>Not sure? Click the Apple menu → <span class="ui">About This Mac</span> and read the <em>Chip</em> line.</p>
+          </li>
+          <li>Double-click the <code>.dmg</code> to open it.</li>
+          <li>Drag the <strong>Bookmark Studio</strong> icon onto the <strong>Applications</strong> shortcut in the same window.</li>
+          <li>Eject the disk image, then open <strong>Applications</strong> and find Bookmark Studio.</li>
+          <li>
+            <p><strong>Right-click</strong> (or <kbd>Control</kbd>-click) the app icon and choose <span class="ui">Open</span>. In the dialog that appears, click <span class="ui">Open</span> again.</p>
+            <p>Do this the first time only. After that, a normal double-click works.</p>
+          </li>
+        </ol>
+
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <p><span class="label">Don't skip the right-click on first launch.</span> The macOS build isn't notarized by Apple yet, so a plain double-click gives you <em>"Bookmark Studio can't be opened because Apple cannot check it for malicious software"</em> with no way forward. Opening from the right-click menu gives you the <span class="ui">Open</span> button that a double-click doesn't.</p>
+            <p>If macOS still refuses, open <span class="ui">System Settings → Privacy &amp; Security</span>, scroll to the Security section, and click <span class="ui">Open Anyway</span> next to the Bookmark Studio message.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Linux -->
+      <div class="card">
+        <div class="card-head">
+          <span class="os-badge"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c-2.2 0-3.5 1.7-3.5 4.2 0 1.3.2 2 .1 2.9-.2 1.2-1.4 2.6-2 4-.6 1.3-.9 2.6-1.4 3.4-.5.8-1.3 1-1.2 1.8.1.7 1 .8 2 1.2s1.6 1 2.5 1.2c.9.2 1.6-.4 1.9-1h3.2c.3.6 1 1.2 1.9 1 .9-.2 1.5-.8 2.5-1.2s1.9-.5 2-1.2c.1-.8-.7-1-1.2-1.8-.5-.8-.8-2.1-1.4-3.4-.6-1.4-1.8-2.8-2-4-.1-.9.1-1.6.1-2.9C15.5 3.7 14.2 2 12 2zm-1.6 3.1c.4 0 .8.5.8 1.1s-.4 1.1-.8 1.1-.8-.5-.8-1.1.4-1.1.8-1.1zm3.2 0c.4 0 .8.5.8 1.1s-.4 1.1-.8 1.1-.8-.5-.8-1.1.4-1.1.8-1.1z"/></svg>Linux</span>
+          <h3>Ubuntu, Debian, Fedora and others</h3>
+        </div>
+
+        <h4>Option A — <code>.deb</code> package (Ubuntu, Debian, Mint, Pop!_OS)</h4>
+        <ol class="steps">
+          <li>Download <code>Bookmark Studio-&lt;version&gt;.deb</code>.</li>
+          <li>
+            <p>Double-click it to open your software installer, or install from a terminal:</p>
+            <pre><code>sudo apt install ./"Bookmark Studio-2.1.1.deb"</code></pre>
+            <p><code>sudo dpkg -i</code> works too, but <code>apt</code> is worth preferring — it pulls in any missing system libraries for you.</p>
+          </li>
+          <li>Launch <strong>Bookmark Studio</strong> from your applications menu, or run <code>bookmark-studio</code> in a terminal.</li>
+        </ol>
+
+        <h4>Option B — <code>.AppImage</code> (any distribution, no install)</h4>
+        <ol class="steps">
+          <li>Download <code>Bookmark Studio-&lt;version&gt;.AppImage</code>.</li>
+          <li>
+            <p>Make it executable — right-click → <span class="ui">Properties</span> → <span class="ui">Permissions</span> → tick <em>Allow executing file as program</em>, or from a terminal:</p>
+            <pre><code>chmod +x "Bookmark Studio-2.1.1.AppImage"</code></pre>
+          </li>
+          <li>
+            <p>Double-click to run it, or:</p>
+            <pre><code>./"Bookmark Studio-2.1.1.AppImage"</code></pre>
+          </li>
+        </ol>
+
+        <div class="callout note">
+          <span class="ico" aria-hidden="true">i</span>
+          <div>
+            <p>On a minimal desktop install you may need a few system libraries the <code>.deb</code> pulls in automatically. If the AppImage refuses to start, install them by hand:</p>
+            <pre><code>sudo apt install libgtk-3-0 libnotify4 libnss3 libxss1 \
+  libxtst6 xdg-utils libatspi2.0-0 libuuid1 libsecret-1-0</code></pre>
+            <p>On Fedora the equivalent packages are <code>gtk3</code>, <code>libnotify</code>, <code>nss</code>, <code>libXScrnSaver</code> and <code>libsecret</code>.</p>
+          </div>
+        </div>
+      </div>
+
+      <figure class="shot">
+        <span class="slot">◻︎ Screenshot slot 3.1</span>
+        <p class="what">The End-User License Agreement on first launch</p>
+        <figcaption>The EULA gate shown the very first time the app opens, with the scrollable agreement text and the <strong>I Accept</strong> / <strong>Decline</strong> buttons visible.</figcaption>
+        <span class="file">suggested filename: 03-eula-gate.png</span>
+      </figure>
+
+      <p>The first time you open Bookmark Studio on any platform it shows the <strong>End-User License Agreement</strong>. Read it, then click <span class="ui">I Accept</span>. Declining closes the app — acceptance is required to use it.</p>
+    </section>
+
+    <!-- ══ 4 ══════════════════════════════════════════════════ -->
+    <section class="chapter" id="install-extension">
+      <p class="eyebrow">Chapter 4</p>
+      <h2>Install the browser extension</h2>
+      <p class="lede">The extension signs you in and streams bookmark changes to the desktop app in real time. Install it once per browser you use.</p>
+
+      <div class="callout warn">
+        <span class="ico" aria-hidden="true">!</span>
+        <div><p><span class="label">Keep the desktop app running.</span> The extension talks to Bookmark Studio over a local connection on your own machine. If the app is closed, the extension shows <strong>Disconnected</strong> and sign-in will fail.</p></div>
+      </div>
+
+      <!-- Chromium -->
+      <div class="card">
+        <div class="card-head">
+          <span class="os-badge">Chromium browsers</span>
+          <h3>Chrome, Edge, Brave, Arc, Vivaldi, Chromium</h3>
+        </div>
+
+        <p>All of these share one build, so the steps are identical — only the address you type in step 3 differs.</p>
+
+        <ol class="steps">
+          <li>
+            <p>Download <code>bookmark-studio-chrome-extension-v&lt;version&gt;.zip</code> from the release Assets list.</p>
+          </li>
+          <li>
+            <p><strong>Unzip it</strong>, and put the resulting folder somewhere permanent — your Documents folder is fine. The browser reads the extension from this folder every time it starts, so deleting or moving it later breaks the extension.</p>
+          </li>
+          <li>
+            <p>In your browser, open the extensions page:</p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Browser</th><th>Address</th></tr></thead>
+                <tbody>
+                  <tr><td>Chrome</td><td><code>chrome://extensions</code></td></tr>
+                  <tr><td>Edge</td><td><code>edge://extensions</code></td></tr>
+                  <tr><td>Brave</td><td><code>brave://extensions</code></td></tr>
+                  <tr><td>Vivaldi</td><td><code>vivaldi://extensions</code></td></tr>
+                  <tr><td>Arc</td><td><code>arc://extensions</code></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </li>
+          <li>Turn on <span class="ui">Developer mode</span> — the toggle is in the top-right corner on Chrome, Brave and Vivaldi, and in the left sidebar on Edge.</li>
+          <li>Click <span class="ui">Load unpacked</span> and select the unzipped folder from step 2. Select the folder itself, not a file inside it.</li>
+          <li>
+            <p><strong>Bookmark Studio Sync</strong> now appears in your extension list. Pin it: click the puzzle-piece icon in the toolbar, then the pin next to Bookmark Studio, so its icon stays visible.</p>
+          </li>
+        </ol>
+
+        <div class="callout tip">
+          <span class="ico" aria-hidden="true">✓</span>
+          <div><p><span class="label">Already installed the desktop app?</span> The same extension ships inside it, so you can skip the download. Click <span class="ui">Open the extension folder</span> on the app's welcome screen and it opens the folder to use in step 4 — no unzipping needed.</p></div>
+        </div>
+
+        <figure class="shot">
+          <span class="slot">◻︎ Screenshot slot 4.1</span>
+          <p class="what">The extensions page with Developer mode on and Load unpacked highlighted</p>
+          <figcaption>Chrome's <code>chrome://extensions</code> page. Show the Developer-mode toggle switched on (top right) and the <strong>Load unpacked</strong> button (top left) — ideally with the Bookmark Studio card already loaded below.</figcaption>
+          <span class="file">suggested filename: 04-load-unpacked.png</span>
+        </figure>
+
+        <div class="callout note">
+          <span class="ico" aria-hidden="true">i</span>
+          <div><p>Developer mode has to stay on. Chromium browsers disable unpacked extensions when it's switched off. Some may also show a "disable developer mode extensions" prompt at startup — dismiss it with <span class="ui">Cancel</span> or <span class="ui">Keep</span>.</p></div>
+        </div>
+      </div>
+
+      <!-- Safari -->
+      <div class="card">
+        <div class="card-head">
+          <span class="os-badge">macOS only</span>
+          <h3>Safari 17 or later</h3>
+        </div>
+
+        <p>Safari can't load an extension folder the way Chromium browsers can. Apple requires every Safari extension to be wrapped inside a small native app, and that wrapping has to happen on your own Mac using Apple's own tool.</p>
+
+        <div class="callout warn">
+          <span class="ico" aria-hidden="true">!</span>
+          <div>
+            <p><span class="label">This one needs Xcode.</span> Unlike the Chromium extension, the Safari download is source that you convert and build yourself. You'll need a Mac with <strong>Xcode</strong> installed — a free download from the Mac App Store, around 7 GB — and you'll be running two terminal commands.</p>
+            <p>If that's more than you want to take on, use Chrome, Edge, Brave, Arc or Vivaldi instead. The desktop app behaves identically whichever browser feeds it.</p>
+          </div>
+        </div>
+
+        <ol class="steps">
+          <li>Download <code>bookmark-studio-safari-extension-v&lt;version&gt;.zip</code> from the release Assets list and unzip it.</li>
+          <li>
+            <p>Open <strong>Terminal</strong> and convert the unzipped folder into an Xcode project, replacing the path with wherever you unzipped it:</p>
+            <pre><code>xcrun safari-web-extension-converter ~/Downloads/safari \
+  --project-location ~/Downloads/safari-xcode --swift</code></pre>
+            <p>Answer <em>yes</em> to the prompts it shows.</p>
+          </li>
+          <li>Open the generated project in Xcode, then click <strong>Run</strong> (the ▶ button). A small window appears — this is the host app whose only job is to register the extension with Safari. You can close it once it's opened.</li>
+          <li>In Safari, open <span class="ui">Safari → Settings → Extensions</span>.</li>
+          <li>
+            <p>Tick the checkbox next to <strong>Bookmark Studio Sync</strong>.</p>
+            <p>If it isn't listed, enable <span class="ui">Safari → Settings → Advanced → Show features for web developers</span>, then tick <span class="ui">Allow unsigned extensions</span> in the Developer tab and check again.</p>
+          </li>
+          <li>When Safari asks for permission to read your bookmarks, choose <span class="ui">Allow</span>. Without this the extension connects but has nothing to send.</li>
+          <li>Click the Bookmark Studio icon in Safari's toolbar to open the popup and sign in.</li>
+        </ol>
+
+        <p>The unzipped folder also contains <code>README-XCODE.md</code> with the same steps and notes on Safari-specific quirks.</p>
+
+        <div class="callout note">
+          <span class="ico" aria-hidden="true">i</span>
+          <div>
+            <p>If the toolbar icon isn't visible, right-click Safari's toolbar → <span class="ui">Customize Toolbar</span> and drag the Bookmark Studio icon into place.</p>
+            <p><strong>Safari 17 or later is required.</strong> Earlier versions don't support the extension format this build uses.</p>
+          </div>
+        </div>
+      </div>
+
+      <h3>Sign in from the extension popup</h3>
+      <p>This is the step that unlocks the desktop app.</p>
+
+      <ol class="steps">
+        <li>Make sure Bookmark Studio (the desktop app) is open.</li>
+        <li>Click the <strong>Bookmark Studio</strong> icon in your browser toolbar.</li>
+        <li>
+          <p>Choose how to sign in:</p>
+          <ul>
+            <li><span class="ui">Continue with Google</span> — opens a Google sign-in page in a new tab. Pick your account, approve, and return to the browser.</li>
+            <li><span class="ui">Create account</span> — enter an email address and a password of at least 8 characters. This account lives only on your computer.</li>
+          </ul>
+        </li>
+        <li>The popup switches to a status view showing your email and a green <strong>Connected</strong> badge.</li>
+        <li>Switch to the desktop app. The welcome screen is replaced by your library, and your email appears at the bottom of the left sidebar.</li>
+      </ol>
+
+      <figure class="shot">
+        <span class="slot">◻︎ Screenshot slot 4.2</span>
+        <p class="what">The extension popup, before and after signing in</p>
+        <figcaption>Two popup states side by side: (left) the sign-in view with <strong>Continue with Google</strong> and the email/password tabs; (right) the status view showing the account email, the green <strong>Connected</strong> badge and the <strong>Force Full Sync</strong> button.</figcaption>
+        <span class="file">suggested filename: 04-popup-states.png</span>
+      </figure>
+
+      <div class="callout tip">
+        <span class="ico" aria-hidden="true">✓</span>
+        <div><p><span class="label">Use several browsers at once.</span> Install the extension in each one and sign in with the same account. All their bookmarks merge into one library, deduplicated by address, with a badge on each card showing which browser it came from. Signing out from one browser signs you out everywhere.</p></div>
+      </div>
+    </section>
+
+    <!-- ══ 5 ══════════════════════════════════════════════════ -->
+    <section class="chapter" id="first-run">
+      <p class="eyebrow">Chapter 5</p>
+      <h2>First run &amp; filling your library</h2>
+      <p class="lede">Once you're signed in, get your bookmarks into the app and learn your way around the window.</p>
+
+      <h3>Two ways to add bookmarks</h3>
+      <p>They work together — most people do the import once for their existing collection, then let the extension keep things current.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th></th><th>Import</th><th>Live sync</th></tr></thead>
+          <tbody>
+            <tr><td><strong>What it brings</strong></td><td>Everything already in your browser, with its folder structure</td><td>New, changed and deleted bookmarks as they happen</td></tr>
+            <tr><td><strong>How often</strong></td><td>When you ask for it</td><td>Continuously, while the app and browser are both open</td></tr>
+            <tr><td><strong>Where items land</strong></td><td>In the folder tree, mirroring your browser</td><td>In <span class="ui">All Bookmarks</span>, with a browser badge</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Import your existing bookmarks</h3>
+      <ol class="steps">
+        <li>Click <span class="ui">Import bookmarks</span> on the welcome screen, or from the toolbar if you already have a library.</li>
+        <li>
+          <p>The dialog offers two routes:</p>
+          <ul>
+            <li><strong>Detected browser</strong> — if Bookmark Studio found your browser's bookmarks file, it names the browser and offers a one-click import. This is the easy path.</li>
+            <li><strong>Choose a file</strong> — pick a bookmarks file yourself. Use this for a second browser profile, a browser that wasn't detected, or a backup.</li>
+          </ul>
+        </li>
+        <li>Click the import button and wait a few seconds. Large libraries take longer; the button shows progress.</li>
+        <li>The folder tree fills in on the left and thumbnails start appearing in the grid.</li>
+      </ol>
+
+      <div class="callout note">
+        <span class="ico" aria-hidden="true">i</span>
+        <div>
+          <p><span class="label">Close your browser first for the cleanest import.</span> Browsers hold their bookmarks file open, and a file being written to while it's read can produce a partial import. If the import looks short, quit the browser and run it again.</p>
+        </div>
+      </div>
+
+      <h3>Thumbnails</h3>
+      <p>Bookmark Studio fetches a preview image for each site in the background — the page's own social preview image where one exists, otherwise a lettered placeholder. They're cached on disk, so this only happens once per site. On a large library expect the grid to keep filling in for a minute or two after import.</p>
+
+      <h3>Finding your way around</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Area</th><th>What it's for</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Left sidebar</strong></td><td>Your folder tree, mirroring the browser. <span class="ui">All Bookmarks</span> at the top shows everything. Click a folder to filter the grid; click the arrow to expand it. Your account sits at the bottom.</td></tr>
+            <tr><td><strong>Search</strong></td><td>Filters across your whole library by title and address, regardless of which folder is selected.</td></tr>
+            <tr><td><strong>Toolbar</strong></td><td>Current folder name and site count on the left. On the right: <span class="ui">Sort</span>, the grid/list toggle, and <span class="ui">Select</span>.</td></tr>
+            <tr><td><strong>Sort</strong></td><td>By <em>Title</em>, <em>Recently added</em>, or <em>Site</em> (groups everything from the same domain together).</td></tr>
+            <tr><td><strong>Grid / List</strong></td><td>Grid shows large thumbnails — good for visual browsing. List is denser — good for scanning a lot of titles.</td></tr>
+            <tr><td><strong>Select</strong></td><td>Turns on checkboxes for comparing several sites at once. See <a href="#analyze-many">Chapter 7</a>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <figure class="shot">
+        <span class="slot">◻︎ Screenshot slot 5.1</span>
+        <p class="what">The main window with callout numbers on each region</p>
+        <figcaption>Annotate the full window with numbered markers: ① folder tree, ② search, ③ folder name &amp; count, ④ Sort menu, ⑤ grid/list toggle, ⑥ Select button, ⑦ account menu. Use the same numbers in the caption.</figcaption>
+        <span class="file">suggested filename: 05-window-anatomy.png</span>
+      </figure>
+    </section>
+
+    <!-- ══ 6 ══════════════════════════════════════════════════ -->
+    <section class="chapter" id="analyze-one">
+      <p class="eyebrow">Chapter 6</p>
+      <h2>Analyze one site</h2>
+      <p class="lede">The core action: point Bookmark Studio at a bookmarked site and get its design broken down into readable layers.</p>
+
+      <h3>Run the analysis</h3>
+      <ol class="steps">
+        <li>Hover over any card in the grid. An overlay appears across it.</li>
+        <li>Click <span class="ui">Analyze design</span>.</li>
+        <li>
+          <p>A full-window view opens with the site's name and address at the top and its screenshot below. While it works you'll see a loading state — usually 5–15 seconds, longer for heavy sites.</p>
+        </li>
+        <li>When it's done, the analysis appears as a series of sections you can scroll through.</li>
+      </ol>
+
+      <figure class="shot">
+        <span class="slot">◻︎ Screenshot slot 6.1</span>
+        <p class="what">A bookmark card with the hover overlay showing</p>
+        <figcaption>One card in the grid, mouse hovering, with the <strong>Analyze design</strong> action clearly visible on the overlay. Crop tight — two or three cards wide is enough.</figcaption>
+        <span class="file">suggested filename: 06-card-hover.png</span>
+      </figure>
+
+      <h3>What you get back</h3>
+      <p>Each analysis is organised into sections. A site that doesn't use something — no animation, no design tokens — simply won't show that section.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Section</th><th>What it tells you</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Overall mood</strong></td><td>A plain-language read of the design's character, inferred from everything else below.</td></tr>
+            <tr><td><strong>Built with</strong></td><td>The frameworks, libraries and platforms detected behind the site.</td></tr>
+            <tr><td><strong>Color</strong></td><td>The palette, ordered by how much of the page each color occupies. Click any swatch to copy its hex code. A <em>Color system</em> block underneath adds the relationships — harmony, contrast pairings, roles.</td></tr>
+            <tr><td><strong>Typography</strong></td><td>The typefaces in use and the full size scale, from smallest label to largest heading, with the weights actually observed on the page. A <em>Type system</em> block shows the ratio and hierarchy.</td></tr>
+            <tr><td><strong>Layout</strong></td><td>Container widths, grid columns, gutters and the spacing rhythm the page is built on.</td></tr>
+            <tr><td><strong>Components</strong></td><td>Recurring UI pieces found on the page — buttons, cards, inputs — including a detailed read of the primary button's shape, padding and states.</td></tr>
+            <tr><td><strong>Motion &amp; effects</strong></td><td>Transition durations and easing curves, plus gradients and glass/blur effects.</td></tr>
+            <tr><td><strong>Design tokens</strong></td><td>Named CSS custom properties the site exposes — the closest thing to reading its design system directly.</td></tr>
+            <tr><td><strong>Accessibility &amp; theme</strong></td><td>Contrast characteristics, dark-mode support and related signals.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <figure class="shot">
+        <span class="slot">◻︎ Screenshot slot 6.2</span>
+        <p class="what">A completed analysis, scrolled to the Color and Typography sections</p>
+        <figcaption>The single-site analysis window showing the Color section with its swatches and the start of Typography. Choose a site with a distinctive palette so the swatches read well.</figcaption>
+        <span class="file">suggested filename: 06-analysis-result.png</span>
+      </figure>
+
+      <h3>Quick actions on a finished analysis</h3>
+      <p>Scroll to the bottom of the analysis for three buttons:</p>
+      <ul>
+        <li><span class="ui">Save as PDF</span> — the complete analysis as a formatted PDF, straight to your downloads folder.</li>
+        <li><span class="ui">Export design profile</span> — the analysis as machine-readable data. See <a href="#download-skill">Chapter 9</a>.</li>
+        <li><span class="ui">Analyze again</span> — discards the cached result and re-reads the live site. Use this when a site has been redesigned.</li>
+      </ul>
+
+      <div class="callout note">
+        <span class="ico" aria-hidden="true">i</span>
+        <div>
+          <p><span class="label">Results are cached.</span> Analyzing the same site again is instant, because the result is stored locally. Only <span class="ui">Analyze again</span> forces a fresh read.</p>
+        </div>
+      </div>
+
+      <div class="callout warn">
+        <span class="ico" aria-hidden="true">!</span>
+        <div>
+          <p><span class="label">Some sites read better than others.</span> Sites that build their styling at runtime, or that render everything into a canvas, expose less to inspect — colors may be approximated from the screenshot instead of read exactly, and some sections may come back thin. When that happens the app labels the section so you know the values are estimates. Login-walled pages return only what a signed-out visitor can see.</p>
+        </div>
+      </div>
+
+      <p>Press <kbd>Esc</kbd> or click the <span class="ui">✕</span> in the top-right corner to close the analysis and return to your library.</p>
+    </section>
+
+    <!-- ══ 7 ══════════════════════════════════════════════════ -->
+    <section class="chapter" id="analyze-many">
+      <p class="eyebrow">Chapter 7</p>
+      <h2>Analyze several sites at once</h2>
+      <p class="lede">Compare up to five sites side by side in a single view — the fastest way to see how designs in a category differ, and the starting point for mixing them.</p>
+
+      <h3>Select and run</h3>
+      <ol class="steps">
+        <li>Click <span class="ui">Select</span> in the toolbar. Checkboxes appear on every card and a selection bar drops in below the toolbar.</li>
+        <li>
+          <p>Tick the cards you want. The bar keeps a running count — <em>3 of 5 selected</em>.</p>
+          <p>Use <span class="ui">Select all</span> to take the first five in the current view, or <span class="ui">Clear</span> to start over.</p>
+        </li>
+        <li>Click <span class="ui">Analyze Selected (3)</span>.</li>
+        <li>
+          <p>The comparison view opens immediately with one column per site. Each column loads on its own, so the fast ones are readable while the slow ones are still working. The header counts progress — <em>2 of 3 analyzed</em>.</p>
+        </li>
+      </ol>
+
+      <div class="callout note">
+        <span class="ico" aria-hidden="true">i</span>
+        <div><p><span class="label">Five is the limit.</span> Past five, columns get too narrow to compare properly and analyses take too long to run together. Once you've hit five, other checkboxes stop responding until you untick something.</p></div>
+      </div>
+
+      <figure class="shot">
+        <span class="slot">◻︎ Screenshot slot 7.1</span>
+        <p class="what">Selection mode with the selection bar visible</p>
+        <figcaption>The grid in Select mode: several cards ticked, and the selection bar showing the count, <strong>Select all</strong>, <strong>Clear</strong> and the <strong>Analyze Selected</strong> button.</figcaption>
+        <span class="file">suggested filename: 07-select-mode.png</span>
+      </figure>
+
+      <h3>Reading the comparison view</h3>
+      <p>Each column is an independent, complete analysis — the same sections in the same order as the single-site view, so you can read straight across a row to compare like with like.</p>
+      <ul>
+        <li>Each column <strong>scrolls on its own</strong>. Scroll one to Typography and compare it against another at your own pace.</li>
+        <li>With four or five sites the row <strong>scrolls sideways</strong> rather than squeezing columns — every column stays readable.</li>
+        <li>If a site fails to analyze, only its column shows the error. The rest are unaffected, and you can retry that one from inside its column.</li>
+      </ul>
+
+      <figure class="shot">
+        <span class="slot">◻︎ Screenshot slot 7.2</span>
+        <p class="what">Three sites side by side in the comparison view</p>
+        <figcaption>The comparison view with three columns, each scrolled to its Color section so the palettes line up for comparison. Include the header showing the site count and the <strong>Review &amp; edit</strong> button.</figcaption>
+        <span class="file">suggested filename: 07-comparison.png</span>
+      </figure>
+
+      <p>Press <kbd>Esc</kbd> to close the comparison. Your selection is preserved, so you can adjust it and run again without starting over.</p>
+    </section>
+
+    <!-- ══ 8 ══════════════════════════════════════════════════ -->
+    <section class="chapter" id="sections">
+      <p class="eyebrow">Chapter 8</p>
+      <h2>Pick sections &amp; attributes from different sites</h2>
+      <p class="lede">This is where Bookmark Studio stops being a viewer and becomes a design tool: take the colors from one site, the typography from another, the layout from a third, and assemble them into one profile.</p>
+
+      <h3>The idea in one line</h3>
+      <p>Every section of every analysis carries a <span class="ui">Select</span> checkbox. Tick a section to claim that aspect from that site. Tick sections from different columns to build a blend.</p>
+
+      <div class="callout note">
+        <span class="ico" aria-hidden="true">i</span>
+        <div><p><span class="label">This works with one site too.</span> Open a single analysis and the same checkboxes are there. Selecting from one site just means picking which parts of it you want to keep — the rest of the flow is identical.</p></div>
+      </div>
+
+      <h3>Step 1 — Tick the sections you want</h3>
+      <p>Each section header has a small <span class="ui">Select</span> box in its top corner. Tick it and that section is claimed.</p>
+      <p>The rule enforced throughout: <strong>one source per aspect</strong>. Once you've taken Color from site A, the Color checkbox on sites B and C locks — you can't take a palette from two places at once. Untick site A's Color to release it. A single site can contribute as many aspects as you like.</p>
+
+      <p>The nine selectable aspects:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Aspect</th><th>What comes along with it</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Overall mood</strong></td><td>The design's character summary. Always available on any analysis.</td></tr>
+            <tr><td><strong>Built with</strong></td><td>The detected tech stack.</td></tr>
+            <tr><td><strong>Color</strong></td><td>The palette, plus the derived color system — harmony, contrast pairings, roles.</td></tr>
+            <tr><td><strong>Typography</strong></td><td>Typefaces, the full size scale, observed weights and the type system.</td></tr>
+            <tr><td><strong>Layout</strong></td><td>Container widths, grid, gutters and spacing rhythm.</td></tr>
+            <tr><td><strong>Components</strong></td><td>The component inventory and the primary button specification.</td></tr>
+            <tr><td><strong>Motion &amp; effects</strong></td><td>Durations, easing curves, gradients and blur/glass effects.</td></tr>
+            <tr><td><strong>Design tokens</strong></td><td>The named CSS variables the site exposes.</td></tr>
+            <tr><td><strong>Accessibility &amp; theme</strong></td><td>Contrast behaviour and dark-mode support.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout note">
+        <span class="ico" aria-hidden="true">i</span>
+        <div><p>A checkbox that's greyed out and won't tick means that site has nothing to offer for that aspect — no animation was found, no tokens were exposed. Sections are only offered when there's real data behind them, so you never end up with an empty block in your export.</p></div>
+      </div>
+
+      <h3>Step 2 — Narrow down to individual attributes</h3>
+      <p>Whole sections are the coarse control. Inside several of them you can go item by item.</p>
+      <p>Once a section is ticked, its individual items become tickable too. They all start ticked — you're removing what you don't want, not adding what you do.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Inside…</th><th>You can keep or drop…</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Color</strong></td><td>Each swatch individually — drop the four greys and keep the two brand colors.</td></tr>
+            <tr><td><strong>Typography</strong></td><td>Each row of the size scale, each typeface, and each observed weight and size.</td></tr>
+            <tr><td><strong>Motion &amp; effects</strong></td><td>Each gradient, duration, easing curve and motion usage.</td></tr>
+            <tr><td><strong>Design tokens</strong></td><td>Each named token.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout warn">
+        <span class="ico" aria-hidden="true">!</span>
+        <div><p><span class="label">Unticking a section resets its narrowing.</span> If you untick Color and re-tick it — or move Color to a different site — your per-swatch choices are cleared and the full palette comes back. Do your narrowing after you've settled which site each aspect comes from.</p></div>
+      </div>
+
+      <figure class="shot">
+        <span class="slot">◻︎ Screenshot slot 8.1</span>
+        <p class="what">Cherry-picking across two columns</p>
+        <figcaption>The comparison view with the <strong>Color</strong> section ticked on the left column and <strong>Typography</strong> ticked on the right. If possible, show the left column's Color section with a couple of individual swatches unticked, and the greyed-out Color checkbox on the right column.</figcaption>
+        <span class="file">suggested filename: 08-cherry-pick.png</span>
+      </figure>
+
+      <h3>Step 3 — Review &amp; edit</h3>
+      <p>The header keeps a live count — <em>3 aspects picked</em> — and lights up the <span class="ui">Review &amp; edit</span> button as soon as anything is ticked. <span class="ui">Clear</span> next to it wipes every selection.</p>
+      <p>Click <span class="ui">Review &amp; edit</span> and your picks are assembled into a single combined profile, shown grouped by aspect. Each block is labelled with the site it came from, so you can always see where a value originated.</p>
+
+      <h4>Retuning the palette</h4>
+      <p>Colors are the one thing you can change in this window. Everything else is shown for reference and travels through unchanged.</p>
+      <ul>
+        <li><strong>Change a color</strong> — use the color picker swatch, or type a hex code directly into the field beside it.</li>
+        <li><strong>Set emphasis</strong> — give each color a percentage describing how much of the design it should occupy. A conventional split is a dominant color around 60%, a secondary around 30%, and an accent around 10%.</li>
+        <li><strong>Automatic rebalancing</strong> — the group always totals exactly 100%. Raise one color and the others drop proportionally; lower one and they rise. You never have to do the arithmetic.</li>
+        <li><strong>Reset</strong> — returns every color to an equal share so you can start the distribution again.</li>
+      </ul>
+
+      <figure class="shot">
+        <span class="slot">◻︎ Screenshot slot 8.2</span>
+        <p class="what">The Review &amp; edit window with the editable color list</p>
+        <figcaption>The review window showing the blended profile. Focus on the Color card: the picker swatches, hex fields, emphasis percentages and the <strong>Reset</strong> control. Include the header with <strong>Save PDF</strong>, <strong>Export profile</strong> and <strong>Download skill</strong>.</figcaption>
+        <span class="file">suggested filename: 08-review-edit.png</span>
+      </figure>
+
+      <h3>Step 4 — Export</h3>
+      <p>Three buttons sit in the review window's header. All three use exactly what's on screen, including your color edits.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Button</th><th>Produces</th></tr></thead>
+          <tbody>
+            <tr><td><span class="ui">Save PDF</span></td><td>A formatted document of the combined profile — for sharing, printing or attaching to a brief.</td></tr>
+            <tr><td><span class="ui">Export profile</span></td><td>A JSON file of the profile — for feeding into other tools.</td></tr>
+            <tr><td><span class="ui">Download skill</span></td><td>A packaged skill folder with your profile inside. See the next chapter.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout tip">
+        <span class="ico" aria-hidden="true">✓</span>
+        <div>
+          <p><span class="label">A worked example.</span> To build a profile that's "this brand's colors, that magazine's typography, that product site's spacing":</p>
+          <ol style="margin-top:8px">
+            <li>Select all three bookmarks and analyze them together.</li>
+            <li>Tick <strong>Color</strong> on the brand column, then untick the greys so only the brand colors remain.</li>
+            <li>Tick <strong>Typography</strong> on the magazine column.</li>
+            <li>Tick <strong>Layout</strong> on the product column.</li>
+            <li>Click <strong>Review &amp; edit</strong>, set the brand color to 60% and the accent to 40%.</li>
+            <li>Click <strong>Download skill</strong>.</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ 9 ══════════════════════════════════════════════════ -->
+    <section class="chapter" id="download-skill">
+      <p class="eyebrow">Chapter 9</p>
+      <h2>Download the skill</h2>
+      <p class="lede">A skill packages your design profile together with the instructions an AI assistant needs to actually build with it — so you can say "make this page match my profile" and get something faithful back.</p>
+
+      <h3>What's inside</h3>
+      <p>The download is a single <code>.zip</code>. Unzipped, it's a folder called <code>reference-design-studio</code> containing:</p>
+      <ul>
+        <li><strong>Your profile</strong>, in a <code>profiles</code> folder — the colors, type, layout and everything else you selected.</li>
+        <li><strong>Reference documentation</strong> — detailed guidance on how each part of a design profile should be interpreted and applied: color systems, type scales, spacing, components, motion, accessibility.</li>
+        <li><strong>Presets</strong> for common jobs — using a reference as loose visual inspiration, extending an existing brand, or adapting a full design system.</li>
+        <li><strong>Examples</strong> showing what good profiles and good prompts look like.</li>
+      </ul>
+
+      <h3>Three ways to export</h3>
+      <p>From a single analysis, click <span class="ui">Export design profile</span> at the bottom of the analysis. A menu offers three destinations:</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Option</th><th>What it does</th><th>Use it when</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="ui">Save to file…</span></td>
+              <td>Opens a save dialog and writes the profile as a JSON file wherever you choose.</td>
+              <td>You just want the data, or you're feeding it into your own tooling.</td>
+            </tr>
+            <tr>
+              <td><span class="ui">Send to design skill</span></td>
+              <td>Drops the profile straight into the skill folder bundled with the app and marks it as the active profile — no dialog, no file handling.</td>
+              <td>You're working on this machine and want it available immediately.</td>
+            </tr>
+            <tr>
+              <td><span class="ui">Download skill (.zip)</span></td>
+              <td>Bundles the complete skill, with your profile inside, into a <code>.zip</code> you choose the location for.</td>
+              <td>You're sharing it, or loading it into an AI assistant elsewhere.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>From the <strong>Review &amp; edit</strong> window the same choices appear as the <span class="ui">Export profile</span> and <span class="ui">Download skill</span> buttons in the header.</p>
+
+      <figure class="shot">
+        <span class="slot">◻︎ Screenshot slot 9.1</span>
+        <p class="what">The export menu open, showing all three destinations</p>
+        <figcaption>The bottom of an analysis with the <strong>Export design profile</strong> menu expanded: <em>Save to file…</em>, <em>Send to design skill</em> and <em>Download skill (.zip)</em>, each with its description line.</figcaption>
+        <span class="file">suggested filename: 09-export-menu.png</span>
+      </figure>
+
+      <h3>Downloading the skill, step by step</h3>
+      <ol class="steps">
+        <li>Finish an analysis, or assemble a blend and open <span class="ui">Review &amp; edit</span>.</li>
+        <li>Click <span class="ui">Download skill</span> — or <span class="ui">Export design profile → Download skill (.zip)</span> from a single analysis.</li>
+        <li>Choose where to save it. The suggested filename is based on the site, for example <code>stripe-com-skill.zip</code>.</li>
+        <li>A confirmation appears — <em>Skill downloaded: stripe-com-skill.zip</em>.</li>
+        <li>Unzip the file. You'll get a <code>reference-design-studio</code> folder.</li>
+      </ol>
+
+      <h3>Using it with an AI assistant</h3>
+      <ol class="steps">
+        <li>Install the unzipped <code>reference-design-studio</code> folder as a skill in your assistant, following that tool's own instructions for adding skills.</li>
+        <li>
+          <p>Ask for what you want in plain language, naming the profile:</p>
+          <pre><code><span class="c">"Use the reference-design-studio skill with my stripe-com</span>
+<span class="c">profile to build a pricing page for a project-management app."</span></code></pre>
+        </li>
+        <li>The assistant reads your profile — real colors, real type scale, real spacing — and the guidance that ships alongside it, and builds to those values rather than guessing.</li>
+      </ol>
+
+      <div class="callout tip">
+        <span class="ico" aria-hidden="true">✓</span>
+        <div><p><span class="label">One skill, many profiles.</span> A downloaded skill can hold more than one profile. Export several and drop them all into the skill's <code>profiles</code> folder, then name the one you want in each request — <em>"use the acme profile"</em>, <em>"use the editorial profile"</em>.</p></div>
+      </div>
+
+      <div class="callout note">
+        <span class="ico" aria-hidden="true">i</span>
+        <div><p>If <span class="ui">Send to design skill</span> or <span class="ui">Download skill</span> can't find the bundled skill folder — an unusual installation, for instance — the app falls back to a normal save dialog and writes the profile as JSON, telling you it did so. Nothing is lost.</p></div>
+      </div>
+    </section>
+
+    <!-- ══ 10 ═════════════════════════════════════════════════ -->
+    <section class="chapter" id="data">
+      <p class="eyebrow">Chapter 10</p>
+      <h2>Where your data lives</h2>
+      <p class="lede">Everything Bookmark Studio stores sits in one folder on your own machine.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Platform</th><th>Folder</th></tr></thead>
+          <tbody>
+            <tr><td>Windows</td><td><code>%APPDATA%\Bookmark Studio</code></td></tr>
+            <tr><td>macOS</td><td><code>~/Library/Application Support/Bookmark Studio</code></td></tr>
+            <tr><td>Linux</td><td><code>~/.config/Bookmark Studio</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Inside it:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Item</th><th>Contents</th></tr></thead>
+          <tbody>
+            <tr><td><code>bookmark-studio.db</code></td><td>Your folders, bookmarks and cached design analyses</td></tr>
+            <tr><td><code>auth.db</code></td><td>Your local account — email and a hashed password</td></tr>
+            <tr><td><code>thumbnails/</code></td><td>Cached site preview images</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>Back up</h4>
+      <p>Copy the whole folder. Restore by putting it back with the app closed.</p>
+
+      <h4>Start fresh</h4>
+      <p>Close the app, delete the folder, and reopen. You'll be asked to accept the licence and sign in again, then you can re-import.</p>
+
+      <h4>Uninstall</h4>
+      <ul>
+        <li><strong>Windows</strong> — Settings → Apps → <em>Bookmark Studio</em> → Uninstall</li>
+        <li><strong>macOS</strong> — drag the app from Applications to the Trash</li>
+        <li><strong>Linux</strong> — <code>sudo apt remove bookmark-studio</code>, or delete the AppImage file</li>
+      </ul>
+      <p>Uninstalling leaves the data folder in place. Delete it too if you want everything gone. Remove the extension separately from your browser's extensions page.</p>
+    </section>
+
+    <!-- ══ 11 ═════════════════════════════════════════════════ -->
+    <section class="chapter" id="troubleshooting">
+      <p class="eyebrow">Chapter 11</p>
+      <h2>Troubleshooting</h2>
+      <p class="lede">The problems people actually hit, and what fixes them.</p>
+
+      <h3>Installing</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Symptom</th><th>Fix</th></tr></thead>
+          <tbody>
+            <tr><td>Windows shows "Windows protected your PC"</td><td>Click <span class="ui">More info</span> → <span class="ui">Run anyway</span>. The installer isn't code-signed yet.</td></tr>
+            <tr><td>macOS says the app "can't be opened"</td><td>Right-click the app icon → <span class="ui">Open</span> → <span class="ui">Open</span>. First launch only. If that fails, System Settings → Privacy &amp; Security → <span class="ui">Open Anyway</span>.</td></tr>
+            <tr><td>AppImage won't start</td><td>Make sure it's executable (<code>chmod +x</code>), then install the libraries listed in <a href="#install-desktop">Chapter 3</a>.</td></tr>
+            <tr><td>App opens then closes immediately</td><td>Your data folder may be damaged. Rename it (see <a href="#data">Chapter 10</a>) and reopen — the app rebuilds it.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Extension &amp; sign-in</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Symptom</th><th>Fix</th></tr></thead>
+          <tbody>
+            <tr><td>Popup says <strong>Disconnected</strong></td><td>The desktop app isn't running. Open it and wait a few seconds — the badge turns green on its own.</td></tr>
+            <tr><td>Sign-in fails or hangs</td><td>Confirm the desktop app is open, then reload the extension from your browser's extensions page and try again.</td></tr>
+            <tr><td>Google sign-in tab opens but never completes</td><td>Complete it in the same browser window, and don't close the tab early. If it still fails, use the email and password option instead.</td></tr>
+            <tr><td>Extension vanished after a browser restart</td><td>Developer mode was switched off. Turn it back on at your browser's extensions page.</td></tr>
+            <tr><td>Extension broke with "manifest file is missing or unreadable"</td><td>The unzipped folder was moved, renamed or deleted. Chromium loads it from that folder every startup — restore it, or unzip again somewhere permanent and <span class="ui">Load unpacked</span> once more.</td></tr>
+            <tr><td>Safari extension isn't in the Extensions list</td><td>Run the Xcode project once so the host app registers it. If it's still missing, enable <span class="ui">Show features for web developers</span> in Safari's Advanced settings, then <span class="ui">Allow unsigned extensions</span> in the Developer tab.</td></tr>
+            <tr><td><code>xcrun: command not found</code></td><td>Xcode isn't installed, or its command-line tools aren't. Install Xcode from the Mac App Store, open it once to finish setup, then run <code>xcode-select --install</code>.</td></tr>
+            <tr><td>Desktop app still shows the welcome screen</td><td>Sign-in has to happen in the extension's popup — the app can't open it for you. Click the toolbar icon and sign in there.</td></tr>
+            <tr><td>Safari needs more than a download</td><td>Expected. Apple requires Safari extensions to be wrapped in a native app, so the zip has to be converted with Xcode first — see <a href="#install-extension">Chapter 4</a>. Safari 17 or later is required.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Bookmarks &amp; sync</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Symptom</th><th>Fix</th></tr></thead>
+          <tbody>
+            <tr><td>Import found nothing</td><td>Close the browser and import again — a browser holding the file open can produce a partial read. Or use <span class="ui">Choose a file</span> and point at the bookmarks file yourself.</td></tr>
+            <tr><td>A new bookmark hasn't appeared</td><td>Open the extension popup and click <span class="ui">Force Full Sync</span>.</td></tr>
+            <tr><td>Synced bookmarks aren't in my folders</td><td>Expected. Items arriving over live sync land in <span class="ui">All Bookmarks</span> with a browser badge rather than being filed into the imported tree.</td></tr>
+            <tr><td>Thumbnails are blank</td><td>Many sites don't publish a preview image; you get a lettered placeholder instead. If <em>every</em> thumbnail is blank, check your internet connection.</td></tr>
+            <tr><td>Arc shows as "Chrome" on the badge</td><td>Known and expected — Arc deliberately identifies itself as Chrome, and there's no way to tell them apart.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Analysis &amp; export</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Symptom</th><th>Fix</th></tr></thead>
+          <tbody>
+            <tr><td>Analysis fails with an error</td><td>The site may be unreachable, behind a login, or blocking automated requests. Open it in your browser to confirm it loads, then click <span class="ui">Analyze again</span>.</td></tr>
+            <tr><td>Colors look wrong or thin</td><td>Sites that build their styling at runtime expose less to inspect. The section is labelled when values are approximated. You can correct any color by hand in <span class="ui">Review &amp; edit</span>.</td></tr>
+            <tr><td>Analysis is out of date after a redesign</td><td>Click <span class="ui">Analyze again</span> — results are cached until you do.</td></tr>
+            <tr><td>A Select checkbox won't tick</td><td>Either that site has no data for the aspect, or another site has already claimed it. Untick it on the other column to release it.</td></tr>
+            <tr><td><span class="ui">Review &amp; edit</span> is greyed out</td><td>Nothing is selected yet. Tick at least one section.</td></tr>
+            <tr><td>My per-swatch choices disappeared</td><td>Unticking a section — or moving it to another site — resets its narrowing. Do the narrowing last.</td></tr>
+            <tr><td>Export saved a JSON file instead of a skill</td><td>The bundled skill folder wasn't found, so the app fell back to saving the profile. The profile itself is intact.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <hr>
+
+      <h3>Quick reference</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Action</th><th>How</th></tr></thead>
+          <tbody>
+            <tr><td>Close any full-window view</td><td><kbd>Esc</kbd></td></tr>
+            <tr><td>Copy a color's hex code</td><td>Click the swatch</td></tr>
+            <tr><td>Search your library</td><td>Type in the sidebar search box</td></tr>
+            <tr><td>Compare several sites</td><td><span class="ui">Select</span> → tick cards → <span class="ui">Analyze Selected</span></td></tr>
+            <tr><td>Refresh a stale analysis</td><td><span class="ui">Analyze again</span></td></tr>
+            <tr><td>Force a full re-sync</td><td>Extension popup → <span class="ui">Force Full Sync</span></td></tr>
+            <tr><td>Sign out everywhere</td><td>Extension popup → <span class="ui">Log Out</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <footer class="doc-footer">
+        <p>Bookmark Studio · User Guide · Version 2.1 · August 2026</p>
+      </footer>
+    </section>
+
+  </main>
+</div>
+
+</body>
+</html>
